@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "outDir": "./dist",
+    "rootDir": "./resources/ts",
+    "declaration": false,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./resources/ts/*"]
+    }
+  },
+  "include": ["resources/ts/**/*"],
+  "exclude": ["node_modules", "dist"]
+}

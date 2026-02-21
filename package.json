@@ -1,0 +1,16 @@
+{
+  "$schema": "https://www.schemastore.org/package.json",
+  "name": "tesseract-agent",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node esbuild.config.mjs",
+    "dev": "node esbuild.config.mjs --dev",
+    "watch": "node esbuild.config.mjs --dev --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0",
+    "typescript": "^5.7.0"
+  }
+}
