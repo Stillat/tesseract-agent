@@ -1,6 +1,6 @@
 {
     "name": "stillat/tesseract-agent",
-    "description": "Tesseract src for NativePHP Mobile applications.",
+    "description": "Tesseract agent for NativePHP Mobile applications.",
     "type": "library",
     "license": "MIT",
     "autoload": {
