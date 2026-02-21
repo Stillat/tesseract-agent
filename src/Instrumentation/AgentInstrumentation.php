@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Native\src\Instrumentation;
+namespace Native\Agent\Instrumentation;
 
 use Forte\Ast\Components\ComponentNode;
 use Forte\Ast\Document\Document;

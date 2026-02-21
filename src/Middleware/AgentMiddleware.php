@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Native\src\Middleware;
+namespace Native\Agent\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Native\src\AgentConnector;
+use Native\Agent\AgentConnector;
 use Symfony\Component\HttpFoundation\Response;
 
 class AgentMiddleware

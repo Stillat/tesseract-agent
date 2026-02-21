@@ -1,6 +1,6 @@
 <?php
 
-namespace Native\src\Actions;
+namespace Native\Agent\Actions;
 
 use Illuminate\Support\Facades\Artisan;
 

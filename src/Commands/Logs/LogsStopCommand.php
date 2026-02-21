@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Native\src\Commands\Logs;
+namespace Native\Agent\Commands\Logs;
 
-use Native\src\Commands\BaseCommand;
+use Native\Agent\Commands\BaseCommand;
 
 class LogsStopCommand extends BaseCommand
 {

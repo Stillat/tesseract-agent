@@ -1,8 +1,8 @@
 <?php
 
-namespace Native\src\Actions;
+namespace Native\Agent\Actions;
 
-use Native\src\AgentConnector;
+use Native\Agent\AgentConnector;
 use ReflectionClass;
 use Throwable;
 

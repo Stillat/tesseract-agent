@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Native\src\Commands\Storage;
+namespace Native\Agent\Commands\Storage;
 
 use Illuminate\Support\Facades\Storage;
-use Native\src\AgentConfig;
-use Native\src\Commands\BaseCommand;
+use Native\Agent\AgentConfig;
+use Native\Agent\Commands\BaseCommand;
 use Throwable;
 
 class StorageReadCommand extends BaseCommand

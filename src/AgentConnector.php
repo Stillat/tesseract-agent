@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Native\src;
+namespace Native\Agent;
 
-use Native\src\Concerns\DiscoversAgent;
-use Native\src\Concerns\ExecutesCommands;
-use Native\src\Concerns\ManagesConnection;
-use Native\src\Concerns\SendsEvents;
-use Native\src\Concerns\TracksRequests;
+use Native\Agent\Concerns\DiscoversAgent;
+use Native\Agent\Concerns\ExecutesCommands;
+use Native\Agent\Concerns\ManagesConnection;
+use Native\Agent\Concerns\SendsEvents;
+use Native\Agent\Concerns\TracksRequests;
 
 class AgentConnector
 {

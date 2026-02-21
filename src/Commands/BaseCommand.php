@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Native\src\Commands;
+namespace Native\Agent\Commands;
 
 abstract class BaseCommand
 {

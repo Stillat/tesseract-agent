@@ -1,8 +1,8 @@
 <?php
 
-namespace Native\src\Collectors;
+namespace Native\Agent\Collectors;
 
-use Native\src\AgentConnector;
+use Native\Agent\AgentConnector;
 use Throwable;
 
 abstract class BaseCollector

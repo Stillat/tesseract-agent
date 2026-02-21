@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Native\src\Concerns;
+namespace Native\Agent\Concerns;
 
 use Illuminate\Support\Str;
 

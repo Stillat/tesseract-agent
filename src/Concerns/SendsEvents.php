@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Native\src\Concerns;
+namespace Native\Agent\Concerns;
 
-use Native\src\MessageTypes;
+use Native\Agent\MessageTypes;
 
 trait SendsEvents
 {

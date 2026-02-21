@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Native\src\Concerns;
+namespace Native\Agent\Concerns;
 
 use Exception;
 use Illuminate\Support\Facades\Log;
-use Native\src\MessageTypes;
+use Native\Agent\MessageTypes;
 use WebSocket\Client;
 use WebSocket\ConnectionException;
 

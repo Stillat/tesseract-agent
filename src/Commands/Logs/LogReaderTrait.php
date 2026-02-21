@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Native\src\Commands\Logs;
+namespace Native\Agent\Commands\Logs;
 
-use Native\src\AgentConfig;
+use Native\Agent\AgentConfig;
 
 trait LogReaderTrait
 {

@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Native\src\Concerns;
+namespace Native\Agent\Concerns;
 
 use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Support\Facades\DB;
-use Native\src\AgentConfig;
-use Native\src\AgentConnector;
+use Native\Agent\AgentConfig;
+use Native\Agent\AgentConnector;
 
 trait TracksQueries
 {

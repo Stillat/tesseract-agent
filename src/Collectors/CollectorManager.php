@@ -1,9 +1,9 @@
 <?php
 
-namespace Native\src\Collectors;
+namespace Native\Agent\Collectors;
 
 use Illuminate\Support\Facades\File;
-use Native\src\AgentConnector;
+use Native\Agent\AgentConnector;
 use ReflectionClass;
 use Throwable;
 

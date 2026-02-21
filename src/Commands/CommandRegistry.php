@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Native\src\Commands;
+namespace Native\Agent\Commands;
 
 use Illuminate\Contracts\Container\Container;
 use InvalidArgumentException;

@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Native\src\Commands\Actions;
+namespace Native\Agent\Commands\Actions;
 
-use Native\src\Actions\ActionManager;
-use Native\src\Commands\BaseCommand;
+use Native\Agent\Actions\ActionManager;
+use Native\Agent\Commands\BaseCommand;
 
 class ActionsManifestCommand extends BaseCommand
 {

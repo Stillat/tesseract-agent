@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Native\src\Commands\Query;
+namespace Native\Agent\Commands\Query;
 
 use Illuminate\Support\Facades\DB;
-use Native\src\Commands\BaseCommand;
+use Native\Agent\Commands\BaseCommand;
 use Throwable;
 
 class QueryRunCommand extends BaseCommand

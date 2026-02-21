@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Native\src\Concerns;
+namespace Native\Agent\Concerns;
 
 use Illuminate\Support\Facades\Log;
-use Native\src\Commands\CommandRegistry;
-use Native\src\MessageTypes;
+use Native\Agent\Commands\CommandRegistry;
+use Native\Agent\MessageTypes;
 use Throwable;
 use WebSocket\ConnectionException;
 use WebSocket\TimeoutException;

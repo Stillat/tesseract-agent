@@ -2,36 +2,36 @@
 
 declare(strict_types=1);
 
-namespace Native\src;
+namespace Native\Agent;
 
 use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
-use Native\src\Commands\Actions\ActionsExecuteCommand as ActionsExecuteCmd;
-use Native\src\Commands\Actions\ActionsManifestCommand;
-use Native\src\Commands\Collectors\CollectorsCollectCommand;
-use Native\src\Commands\Collectors\CollectorsManifestCommand;
-use Native\src\Commands\Collectors\CollectorsRunCommand;
-use Native\src\Commands\CommandRegistry;
-use Native\src\Commands\Logs\LogsPollCommand;
-use Native\src\Commands\Logs\LogsStartCommand;
-use Native\src\Commands\Logs\LogsStopCommand;
-use Native\src\Commands\Query\GetDbSchemaCommand;
-use Native\src\Commands\Query\QueryExplainCommand;
-use Native\src\Commands\Query\QueryRunCommand;
-use Native\src\Commands\Storage\StorageDisksCommand;
-use Native\src\Commands\Storage\StorageDownloadCommand;
-use Native\src\Commands\Storage\StorageListCommand;
-use Native\src\Commands\Storage\StorageMetaCommand;
-use Native\src\Commands\Storage\StorageReadCommand;
-use Native\src\Concerns\RegistersLivewireListeners;
-use Native\src\Concerns\TracksQueries;
-use Native\src\Console\Commands\ActionExecuteCommand;
-use Native\src\Console\Commands\ActionsCommand;
-use Native\src\Http\FrontendAssets;
-use Native\src\Middleware\AgentMiddleware;
-use Native\src\Precompilers\AgentScriptsPrecompiler;
+use Native\Agent\Commands\Actions\ActionsExecuteCommand as ActionsExecuteCmd;
+use Native\Agent\Commands\Actions\ActionsManifestCommand;
+use Native\Agent\Commands\Collectors\CollectorsCollectCommand;
+use Native\Agent\Commands\Collectors\CollectorsManifestCommand;
+use Native\Agent\Commands\Collectors\CollectorsRunCommand;
+use Native\Agent\Commands\CommandRegistry;
+use Native\Agent\Commands\Logs\LogsPollCommand;
+use Native\Agent\Commands\Logs\LogsStartCommand;
+use Native\Agent\Commands\Logs\LogsStopCommand;
+use Native\Agent\Commands\Query\GetDbSchemaCommand;
+use Native\Agent\Commands\Query\QueryExplainCommand;
+use Native\Agent\Commands\Query\QueryRunCommand;
+use Native\Agent\Commands\Storage\StorageDisksCommand;
+use Native\Agent\Commands\Storage\StorageDownloadCommand;
+use Native\Agent\Commands\Storage\StorageListCommand;
+use Native\Agent\Commands\Storage\StorageMetaCommand;
+use Native\Agent\Commands\Storage\StorageReadCommand;
+use Native\Agent\Concerns\RegistersLivewireListeners;
+use Native\Agent\Concerns\TracksQueries;
+use Native\Agent\Console\Commands\ActionExecuteCommand;
+use Native\Agent\Console\Commands\ActionsCommand;
+use Native\Agent\Http\FrontendAssets;
+use Native\Agent\Middleware\AgentMiddleware;
+use Native\Agent\Precompilers\AgentScriptsPrecompiler;
 use Throwable;
 
 class AgentServiceProvider extends ServiceProvider

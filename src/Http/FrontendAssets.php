@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Native\src\Http;
+namespace Native\Agent\Http;
 
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Route;
-use Native\src\AgentConnector;
+use Native\Agent\AgentConnector;
 
 class FrontendAssets
 {

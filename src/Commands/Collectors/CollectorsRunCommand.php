@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Native\src\Commands\Collectors;
+namespace Native\Agent\Commands\Collectors;
 
-use Native\src\Collectors\CollectorManager;
-use Native\src\Commands\BaseCommand;
+use Native\Agent\Collectors\CollectorManager;
+use Native\Agent\Commands\BaseCommand;
 
 class CollectorsRunCommand extends BaseCommand
 {

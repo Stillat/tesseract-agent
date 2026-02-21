@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Native\src;
+namespace Native\Agent;
 
 class AgentConfig
 {

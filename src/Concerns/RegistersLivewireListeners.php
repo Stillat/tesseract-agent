@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Native\src\Concerns;
+namespace Native\Agent\Concerns;
 
 use DateTimeInterface;
 use Illuminate\Support\Str;
 use JsonSerializable;
-use Native\src\AgentConnector;
-use Native\src\MessageTypes;
+use Native\Agent\AgentConnector;
+use Native\Agent\MessageTypes;
 use Throwable;
 
 trait RegistersLivewireListeners

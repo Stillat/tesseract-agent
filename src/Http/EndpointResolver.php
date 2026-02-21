@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Native\src\Http;
+namespace Native\Agent\Http;
 
 use Throwable;
 

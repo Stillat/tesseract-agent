@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Native\src\Precompilers;
+namespace Native\Agent\Precompilers;
 
 use Forte\Ast\Document\Document;
-use Native\src\Instrumentation\AgentInstrumentation;
+use Native\Agent\Instrumentation\AgentInstrumentation;
 
 class AgentScriptsPrecompiler
 {

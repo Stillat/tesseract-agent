@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Native\src\Console\Commands;
+namespace Native\Agent\Console\Commands;
 
 use Illuminate\Console\Command;
-use Native\src\Actions\ActionManager;
+use Native\Agent\Actions\ActionManager;
 
 class ActionsCommand extends Command
 {

@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Native\src\Concerns;
+namespace Native\Agent\Concerns;
 
-use Throwable;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use Native\src\Http\EndpointResolver;
+use Native\Agent\Http\EndpointResolver;
+use Throwable;
 
 trait DiscoversAgent
 {

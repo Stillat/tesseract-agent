@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Native\src\Commands\Storage;
+namespace Native\Agent\Commands\Storage;
 
 use Illuminate\Support\Facades\Storage;
-use Native\src\Commands\BaseCommand;
+use Native\Agent\Commands\BaseCommand;
 use Throwable;
 
 class StorageMetaCommand extends BaseCommand

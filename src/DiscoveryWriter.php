@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Native\src;
+namespace Native\Agent;
 
-use Native\src\Http\EndpointResolver;
+use Native\Agent\Http\EndpointResolver;
 
 class DiscoveryWriter
 {

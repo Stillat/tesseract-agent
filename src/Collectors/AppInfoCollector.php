@@ -1,6 +1,6 @@
 <?php
 
-namespace Native\src\Collectors;
+namespace Native\Agent\Collectors;
 
 use Illuminate\Support\Facades\DB;
 use Throwable;
