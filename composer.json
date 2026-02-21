@@ -1,5 +1,5 @@
 {
-    "name": "nativephp/tesseract-agent",
+    "name": "stillat/tesseract-agent",
     "description": "Tesseract src for NativePHP Mobile applications.",
     "type": "library",
     "license": "MIT",
