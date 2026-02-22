@@ -65,6 +65,9 @@ final class MessageTypes
 
     public const PROPERTY_CHANGE = 'property_change';
 
+    // Preview frame (JS -> Agent -> Dashboard)
+    public const PREVIEW_FRAME = 'preview_frame';
+
     // Navigation actions
     public const NAV_PAGE_LOAD = 'page_load';
 

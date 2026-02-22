@@ -56,6 +56,9 @@ export const MessageTypes = {
   // Method calls and property changes (JS -> Agent)
   METHOD_CALL: 'method_call',
   PROPERTY_CHANGE: 'property_change',
+
+  // Preview frame (JS -> Agent -> Dashboard)
+  PREVIEW_FRAME: 'preview_frame',
 } as const;
 
 export type MessageType = (typeof MessageTypes)[keyof typeof MessageTypes];

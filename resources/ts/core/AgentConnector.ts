@@ -4,6 +4,7 @@ import type { AgentConfig } from '../types/config';
 import type { MessageType } from '../types/messages';
 import { DomObserver } from '../observers/DomObserver';
 import { NetworkObserver } from '../observers/NetworkObserver';
+import { ScreenshotCapture } from '../observers/ScreenshotCapture';
 import { ComponentTracker } from '../trackers/ComponentTracker';
 import { LivewireTracker } from '../trackers/LivewireTracker';
 import { AlpineTracker } from '../trackers/AlpineTracker';
@@ -34,6 +35,7 @@ export class AgentConnector {
   networkObserver: NetworkObserver | null = null;
   componentTracker: ComponentTracker | null = null;
   performanceCollector: PerformanceCollector | null = null;
+  screenshotCapture: ScreenshotCapture | null = null;
   private _trackersInitialized = false;
 
   private messageQueue: Array<Record<string, unknown>> = [];
@@ -624,6 +626,173 @@ export class AgentConnector {
       return this.executePhpCommand('query:explain', { sql, connection });
     });
 
+    this.registerCommand('preview_start', () => {
+      if (!this.screenshotCapture) {
+        this.screenshotCapture = new ScreenshotCapture(this);
+      }
+      this.screenshotCapture.start();
+      return { started: true };
+    });
+
+    this.registerCommand('preview_stop', () => {
+      this.screenshotCapture?.stop();
+      return { stopped: true };
+    });
+
+    // Track the last tapped element for follow-up input commands
+    this.registerCommand('preview_tap', ({ x, y }) => {
+      const pageX = x as number;
+      const pageY = y as number;
+
+      // Scroll so the target point is visible in the viewport
+      // Use plain numeric args for iOS Safari compat (behavior: 'instant' unsupported < 15.4)
+      const vpW = window.innerWidth;
+      const vpH = window.innerHeight;
+      window.scrollTo(Math.max(0, pageX - vpW / 2), Math.max(0, pageY - vpH / 2));
+
+      // Convert page coords to viewport coords
+      const vpX = pageX - window.scrollX;
+      const vpY = pageY - window.scrollY;
+
+      const element = document.elementFromPoint(vpX, vpY);
+      if (!element) {
+        return { found: false, x: pageX, y: pageY };
+      }
+
+      // Determine element type before dispatching events
+      const tag = element.tagName.toLowerCase();
+      const inputEl = element as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
+      const isInput = tag === 'input' || tag === 'textarea' || tag === 'select';
+      const inputType = isInput && 'type' in inputEl ? (inputEl.type || 'text') : null;
+
+      // Elements with native pickers — just focus, don't dispatch click which opens picker
+      const pickerTypes = ['date', 'time', 'datetime-local', 'month', 'week', 'color'];
+      const hasNativePicker = tag === 'select' ||
+        (tag === 'input' && pickerTypes.includes(inputType as string));
+
+      const eventOpts: MouseEventInit = {
+        bubbles: true,
+        cancelable: true,
+        clientX: vpX,
+        clientY: vpY,
+        view: window,
+      };
+
+      if (hasNativePicker) {
+        (element as HTMLElement).focus();
+      } else {
+        // Dispatch touch events for iOS compatibility (many iOS apps only listen for touch)
+        const hasTouchEvents = typeof TouchEvent !== 'undefined' && typeof Touch !== 'undefined';
+        if (hasTouchEvents) {
+          try {
+            const touch = new Touch({ identifier: 0, target: element, clientX: vpX, clientY: vpY, pageX, pageY });
+            element.dispatchEvent(new TouchEvent('touchstart', { bubbles: true, cancelable: true, touches: [touch], targetTouches: [touch], changedTouches: [touch] }));
+            element.dispatchEvent(new TouchEvent('touchend', { bubbles: true, cancelable: true, touches: [], targetTouches: [], changedTouches: [touch] }));
+          } catch { /* Touch constructor not supported */ }
+        }
+
+        // Dispatch pointer events (guard for iOS < 13)
+        if (typeof PointerEvent !== 'undefined') {
+          element.dispatchEvent(new PointerEvent('pointerdown', { ...eventOpts, pointerId: 1 }));
+          element.dispatchEvent(new PointerEvent('pointerup', { ...eventOpts, pointerId: 1 }));
+        }
+
+        // Mouse events + click (universally supported)
+        element.dispatchEvent(new MouseEvent('mousedown', eventOpts));
+        element.dispatchEvent(new MouseEvent('mouseup', eventOpts));
+        element.dispatchEvent(new MouseEvent('click', eventOpts));
+      }
+
+      // Build response with element info
+      const result: Record<string, unknown> = {
+        found: true,
+        tagName: tag,
+        id: element.id || null,
+        classes: Array.from(element.classList),
+        text: element.textContent?.substring(0, 100) || null,
+        isInput,
+        inputType,
+      };
+
+      // For inputs, include current value and any options (for <select>)
+      if (isInput) {
+        result.value = 'value' in inputEl ? inputEl.value : null;
+        result.placeholder = 'placeholder' in inputEl ? inputEl.placeholder : null;
+
+        if (tag === 'select') {
+          const selectEl = inputEl as HTMLSelectElement;
+          result.options = Array.from(selectEl.options).map((opt) => ({
+            value: opt.value,
+            label: opt.text,
+            selected: opt.selected,
+          }));
+          result.multiple = selectEl.multiple;
+        }
+
+        if (tag === 'input' && (inputType === 'checkbox' || inputType === 'radio')) {
+          result.checked = (inputEl as HTMLInputElement).checked;
+        }
+
+        if (tag === 'input' && (inputType === 'range' || inputType === 'number')) {
+          const inp = inputEl as HTMLInputElement;
+          result.min = inp.min || null;
+          result.max = inp.max || null;
+          result.step = inp.step || null;
+        }
+      }
+
+      // Store a CSS selector so preview_input can find this element again
+      result.selector = this.buildUniqueSelector(element);
+
+      return result;
+    });
+
+    this.registerCommand('preview_input', ({ selector, value }) => {
+      const element = document.querySelector(selector as string);
+      if (!element) {
+        return { success: false, error: 'Element not found: ' + selector };
+      }
+
+      const tag = element.tagName.toLowerCase();
+      const inputEl = element as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
+
+      if (tag === 'select') {
+        inputEl.value = value as string;
+        inputEl.dispatchEvent(new Event('change', { bubbles: true }));
+      } else if (tag === 'input' || tag === 'textarea') {
+        inputEl.focus();
+
+        // Use native setter to bypass framework value traps
+        const nativeSetter = Object.getOwnPropertyDescriptor(
+          tag === 'textarea' ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype,
+          'value',
+        )?.set;
+
+        if (nativeSetter) {
+          nativeSetter.call(inputEl, value as string);
+        } else {
+          inputEl.value = value as string;
+        }
+
+        // Dispatch events that frameworks listen for
+        // InputEvent with options may throw on iOS < 14, fall back to plain Event
+        try {
+          inputEl.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: value as string }));
+        } catch {
+          inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+        inputEl.dispatchEvent(new Event('change', { bubbles: true }));
+      } else {
+        return { success: false, error: 'Element is not an input: ' + tag };
+      }
+
+      return {
+        success: true,
+        selector,
+        value: inputEl.value,
+      };
+    });
+
     this.registerCommand('dom:properties', ({ nodeId }) => {
       if (!this.domObserver) return { success: false, error: 'DOM observer not initialized' };
       const element = this.domObserver.getNodeById(nodeId as number);
@@ -765,6 +934,39 @@ export class AgentConnector {
         },
       };
     });
+  }
+
+  private buildUniqueSelector(element: Element): string {
+    // Use ID if available
+    if (element.id) return `#${element.id}`;
+
+    // Build a path from the element to the root
+    const parts: string[] = [];
+    let current: Element | null = element;
+
+    while (current && current !== document.body) {
+      let selector = current.tagName.toLowerCase();
+
+      if (current.id) {
+        parts.unshift(`#${current.id}`);
+        break;
+      }
+
+      // Add nth-child for disambiguation
+      const parent: Element | null = current.parentElement;
+      if (parent) {
+        const siblings = Array.from(parent.children).filter((s: Element) => s.tagName === current!.tagName);
+        if (siblings.length > 1) {
+          const index = siblings.indexOf(current) + 1;
+          selector += `:nth-of-type(${index})`;
+        }
+      }
+
+      parts.unshift(selector);
+      current = parent;
+    }
+
+    return parts.join(' > ');
   }
 
   highlightElement(element: Element, color: string, duration: number): void {
