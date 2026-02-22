@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Native\Agent\Concerns;
 
 use Exception;
-use Illuminate\Support\Facades\Log;
 use Native\Agent\MessageTypes;
 use WebSocket\Client;
 use WebSocket\ConnectionException;
@@ -28,10 +27,6 @@ trait ManagesConnection
         $config = $this->discover();
 
         if (! $config) {
-            Log::debug('[Agent] Send failed: no config (pairing file missing?)', [
-                'pairing_path' => $this->getPairingPath(),
-            ]);
-
             return false;
         }
 
@@ -61,10 +56,6 @@ trait ManagesConnection
             $client = $this->getClient();
 
             if (! $client) {
-                Log::debug('[Agent] Send failed: could not get WebSocket client', [
-                    'connection_failed' => $this->connectionFailed,
-                ]);
-
                 return false;
             }
 
@@ -72,13 +63,11 @@ trait ManagesConnection
 
             return true;
         } catch (ConnectionException $e) {
-            Log::debug('[Agent] Send failed: connection exception', ['error' => $e->getMessage()]);
             $this->client = null;
             $this->connectionFailed = true;
 
             return false;
         } catch (Exception $e) {
-            Log::debug('[Agent] Send failed: exception', ['error' => $e->getMessage()]);
             $this->client = null;
             $this->connectionFailed = true;
 
@@ -93,7 +82,6 @@ trait ManagesConnection
         }
 
         $count = count($this->messageQueue);
-        Log::debug('[Agent] flushQueue: Flushing '.$count.' messages');
         $sent = 0;
 
         foreach ($this->messageQueue as $message) {
@@ -102,7 +90,6 @@ trait ManagesConnection
             }
         }
 
-        Log::debug('[Agent] flushQueue: Sent '.$sent.'/'.$count.' messages');
         $this->messageQueue = [];
 
         return $sent;
@@ -164,8 +151,6 @@ trait ManagesConnection
     protected function getClient(): ?Client
     {
         if ($this->connectionFailed) {
-            Log::debug('[Agent] getClient: Connection already failed, skipping');
-
             return null;
         }
 
@@ -176,13 +161,10 @@ trait ManagesConnection
         $config = $this->discover();
 
         if (! $config) {
-            Log::debug('[Agent] getClient: No config (pairing file issue?)');
-
             return null;
         }
 
         $wsUrl = $config['ws_url'];
-        Log::debug('[Agent] getClient: Connecting to '.$wsUrl);
 
         try {
             $timeout = (int) config('agent.websocket_timeout', 1);
@@ -191,21 +173,12 @@ trait ManagesConnection
                 'timeout' => $timeout,
             ]);
 
-            Log::debug('[Agent] WebSocket connected successfully');
-
             return $this->client;
         } catch (ConnectionException $e) {
-            Log::debug('[Agent] WebSocket connection failed', [
-                'error' => $e->getMessage(),
-                'ws_url' => $wsUrl,
-            ]);
             $this->connectionFailed = true;
 
             return null;
         } catch (Exception $e) {
-            Log::debug('[Agent] WebSocket connection failed', [
-                'error' => $e->getMessage(),
-            ]);
             $this->connectionFailed = true;
 
             return null;

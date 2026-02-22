@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Native\Agent\Concerns;
 
-use Illuminate\Support\Facades\Log;
 use Native\Agent\Commands\CommandRegistry;
 use Native\Agent\MessageTypes;
 use Throwable;
@@ -35,8 +34,6 @@ trait ExecutesCommands
             $data = json_decode($message, true);
 
             if (json_last_error() !== JSON_ERROR_NONE) {
-                Log::debug('[Agent] Received invalid JSON', ['message' => substr($message, 0, 200)]);
-
                 return;
             }
 
@@ -45,11 +42,10 @@ trait ExecutesCommands
             }
         } catch (TimeoutException $e) {
         } catch (ConnectionException $e) {
-            Log::debug('[Agent] Connection lost while checking for commands', ['error' => $e->getMessage()]);
             $this->client = null;
             $this->connectionFailed = true;
         } catch (Throwable $e) {
-            Log::debug('[Agent] Error checking for commands', ['error' => $e->getMessage()]);
+            // Ignore command processing errors
         }
     }
 

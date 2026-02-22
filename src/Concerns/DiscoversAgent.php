@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Native\Agent\Concerns;
 
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Native\Agent\Http\EndpointResolver;
 use Throwable;
@@ -49,10 +48,7 @@ trait DiscoversAgent
 
         $pairingPath = $this->getPairingPath();
 
-        Log::debug('[Agent] Discovering pairing file at: '.$pairingPath);
-
         if (! file_exists($pairingPath)) {
-            Log::debug('[Agent] Pairing file not found');
             $this->config = null;
             self::$pairingCache = null;
             self::$pairingMtime = null;
@@ -86,8 +82,6 @@ trait DiscoversAgent
         $this->config = $data;
         self::$pairingCache = $data;
         self::$pairingMtime = $currentMtime;
-
-        Log::debug('[Agent] Discovered pairing: ws_url='.$this->config['ws_url'].', project_id='.$data['project_id']);
 
         return $this->config;
     }
