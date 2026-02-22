@@ -7,8 +7,8 @@ namespace Native\Agent\Concerns;
 use Native\Agent\Commands\CommandRegistry;
 use Native\Agent\MessageTypes;
 use Throwable;
-use WebSocket\ConnectionException;
-use WebSocket\TimeoutException;
+use WebSocket\Exception\ConnectionLevelInterface;
+use WebSocket\Exception\ConnectionTimeoutException;
 
 trait ExecutesCommands
 {
@@ -25,11 +25,8 @@ trait ExecutesCommands
         try {
             $client->setTimeout(0.1);
 
-            $message = $client->receive();
-
-            if ($message === null) {
-                return;
-            }
+            $response = $client->receive();
+            $message = $response->getContent();
 
             $data = json_decode($message, true);
 
@@ -40,8 +37,8 @@ trait ExecutesCommands
             if (($data['type'] ?? '') === MessageTypes::COMMAND) {
                 $this->handleCommandMessage($data);
             }
-        } catch (TimeoutException $e) {
-        } catch (ConnectionException $e) {
+        } catch (ConnectionTimeoutException $e) {
+        } catch (ConnectionLevelInterface $e) {
             $this->client = null;
             $this->connectionFailed = true;
         } catch (Throwable $e) {

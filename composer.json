@@ -18,7 +18,7 @@
     "require": {
         "php": "^8.2",
         "illuminate/support": "^10.0|^11.0|^12.0",
-        "textalk/websocket": "^1.6",
+        "phrity/websocket": "^3.0",
         "fortephp/forte": "^0.1.0"
     },
     "require-dev": {

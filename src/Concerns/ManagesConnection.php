@@ -7,7 +7,7 @@ namespace Native\Agent\Concerns;
 use Exception;
 use Native\Agent\MessageTypes;
 use WebSocket\Client;
-use WebSocket\ConnectionException;
+use WebSocket\Exception\ExceptionInterface as WebSocketException;
 
 trait ManagesConnection
 {
@@ -62,7 +62,7 @@ trait ManagesConnection
             $client->text(json_encode($message));
 
             return true;
-        } catch (ConnectionException $e) {
+        } catch (WebSocketException $e) {
             $this->client = null;
             $this->connectionFailed = true;
 
@@ -135,7 +135,7 @@ trait ManagesConnection
             $client->text($message);
 
             return true;
-        } catch (ConnectionException $e) {
+        } catch (WebSocketException $e) {
             $this->client = null;
             $this->connectionFailed = true;
 
@@ -169,12 +169,11 @@ trait ManagesConnection
         try {
             $timeout = (int) config('agent.websocket_timeout', 1);
 
-            $this->client = new Client($wsUrl, [
-                'timeout' => $timeout,
-            ]);
+            $this->client = new Client($wsUrl);
+            $this->client->setTimeout($timeout);
 
             return $this->client;
-        } catch (ConnectionException $e) {
+        } catch (WebSocketException $e) {
             $this->connectionFailed = true;
 
             return null;
