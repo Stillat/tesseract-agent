@@ -80,12 +80,25 @@ export class ScreenshotCapture {
   }
 
   private syncFormState(): void {
+    // Sync checkbox/radio checked state (property → attribute for cloneNode)
     document.querySelectorAll<HTMLInputElement>('input[type="checkbox"], input[type="radio"]').forEach(el => {
       if (el.checked) {
         el.setAttribute('checked', '');
       } else {
         el.removeAttribute('checked');
       }
+    });
+
+    // Sync select selected state (selectedIndex → selected attribute on options)
+    document.querySelectorAll<HTMLSelectElement>('select').forEach(selectEl => {
+      const selectedIndex = selectEl.selectedIndex;
+      Array.from(selectEl.options).forEach((option, index) => {
+        if (index === selectedIndex) {
+          option.setAttribute('selected', '');
+        } else {
+          option.removeAttribute('selected');
+        }
+      });
     });
   }
 
