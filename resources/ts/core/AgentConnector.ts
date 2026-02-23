@@ -626,6 +626,8 @@ export class AgentConnector {
       return this.executePhpCommand('query:explain', { sql, connection });
     });
 
+    // Preview commands are disabled until stable — remove this guard to re-enable
+    if (false) {
     this.registerCommand('preview_start', () => {
       if (!this.screenshotCapture) {
         this.screenshotCapture = new ScreenshotCapture(this);
@@ -792,6 +794,92 @@ export class AgentConnector {
         value: inputEl.value,
       };
     });
+
+    this.registerCommand('preview_scroll', ({ deltaX, deltaY }) => {
+      window.scrollBy({
+        left: deltaX as number,
+        top: deltaY as number,
+      });
+      return {
+        scrollX: Math.round(window.scrollX),
+        scrollY: Math.round(window.scrollY),
+      };
+    });
+
+    this.registerCommand('preview_file_upload', ({ selector, base64, filename, mimeType }) => {
+      const element = document.querySelector(selector as string) as HTMLInputElement;
+      if (!element || element.type !== 'file') {
+        return { success: false, error: 'File input not found' };
+      }
+
+      // Decode base64 to File
+      const bstr = atob(base64 as string);
+      const u8arr = new Uint8Array(bstr.length);
+      for (let i = 0; i < bstr.length; i++) {
+        u8arr[i] = bstr.charCodeAt(i);
+      }
+      const file = new File([u8arr], filename as string, { type: mimeType as string, lastModified: Date.now() });
+
+      // Set via DataTransfer API
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      element.files = dt.files;
+
+      // Dispatch events for framework detection (Livewire, Alpine)
+      element.dispatchEvent(new Event('change', { bubbles: true }));
+      element.dispatchEvent(new Event('input', { bubbles: true }));
+
+      return { success: true, filename };
+    });
+
+    // Chunked file upload — for larger files sent in multiple messages
+    const uploadBuffers = new Map<string, { chunks: string[]; filename: string; mimeType: string; selector: string }>();
+
+    this.registerCommand('preview_file_start', ({ selector, filename, mimeType }) => {
+      const element = document.querySelector(selector as string) as HTMLInputElement;
+      if (!element || element.type !== 'file') {
+        return { success: false, error: 'File input not found' };
+      }
+      const uploadId = Math.random().toString(36).substring(2, 10);
+      uploadBuffers.set(uploadId, {
+        chunks: [],
+        filename: filename as string,
+        mimeType: mimeType as string,
+        selector: selector as string,
+      });
+      return { success: true, uploadId };
+    });
+
+    this.registerCommand('preview_file_chunk', ({ uploadId, data, index }) => {
+      const buffer = uploadBuffers.get(uploadId as string);
+      if (!buffer) return { success: false, error: 'Unknown upload' };
+      buffer.chunks[index as number] = data as string;
+      return { success: true, received: (index as number) + 1 };
+    });
+
+    this.registerCommand('preview_file_complete', ({ uploadId }) => {
+      const buffer = uploadBuffers.get(uploadId as string);
+      if (!buffer) return { success: false, error: 'Unknown upload' };
+      uploadBuffers.delete(uploadId as string);
+
+      const fullBase64 = buffer.chunks.join('');
+      const bstr = atob(fullBase64);
+      const u8arr = new Uint8Array(bstr.length);
+      for (let i = 0; i < bstr.length; i++) u8arr[i] = bstr.charCodeAt(i);
+
+      const file = new File([u8arr], buffer.filename, { type: buffer.mimeType, lastModified: Date.now() });
+      const element = document.querySelector(buffer.selector) as HTMLInputElement;
+      if (!element) return { success: false, error: 'Element gone' };
+
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      element.files = dt.files;
+      element.dispatchEvent(new Event('change', { bubbles: true }));
+      element.dispatchEvent(new Event('input', { bubbles: true }));
+
+      return { success: true, filename: buffer.filename };
+    });
+    } // end preview disabled guard
 
     this.registerCommand('dom:properties', ({ nodeId }) => {
       if (!this.domObserver) return { success: false, error: 'DOM observer not initialized' };

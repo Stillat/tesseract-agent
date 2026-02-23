@@ -1,4 +1,3 @@
-import { toJpeg } from 'html-to-image';
 import { MessageTypes } from '../types/messages';
 import type { AgentConnector } from '../core/AgentConnector';
 
@@ -11,41 +10,53 @@ export class ScreenshotCapture {
   private capturing = false;
   private running = false;
 
+  // Adaptive throttling
+  private lastCaptureDuration = 0;
+  private consecutiveFailures = 0;
+  private captureGeneration = 0;
+
+  private readonly quality = 0.7;
+  private readonly maxConsecutiveFailures = 5;
+
+  // Timing — native capture is fast (~10-50ms)
   private readonly captureInterval = 1000;
   private readonly debounceDelay = 200;
-  private readonly quality = 0.85;
-  private readonly pixelRatio = 1;
+  private readonly captureTimeout = 3000;
+
+  private csrfToken = '';
 
   constructor(connector: AgentConnector) {
     this.connector = connector;
   }
 
   start(): void {
-    if (this.running) return;
-    this.running = true;
-    this.connector.log('ScreenshotCapture started');
+    // Preview is disabled until stable — remove this guard to re-enable
+    this.connector.log('ScreenshotCapture: preview is disabled');
+    return;
 
-    // Timer fallback — ensures at least ~1 FPS
+    if (this.running) return;
+
+    // Read CSRF token from the page's meta tag (set by Laravel)
+    this.csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+    this.running = true;
+    this.connector.log('ScreenshotCapture started (native)');
+
+    // Timer — ensures periodic captures even without DOM changes
     this.intervalId = setInterval(() => this.capture(), this.captureInterval);
 
     // MutationObserver — captures on DOM changes (debounced)
-    this.observer = new MutationObserver(() => {
-      if (this.debounceTimeout) clearTimeout(this.debounceTimeout);
-      this.debounceTimeout = setTimeout(() => this.capture(), this.debounceDelay);
-    });
+    this.observer = new MutationObserver(() => this.scheduleCapture());
 
     this.observer.observe(document.body, {
       subtree: true,
       childList: true,
       attributes: true,
-      characterData: true,
+      attributeFilter: ['class', 'style', 'src', 'href', 'hidden', 'checked', 'selected', 'value', 'disabled'],
     });
 
     // Scroll listener — captures on scroll for ruler updates
-    this.scrollHandler = () => {
-      if (this.debounceTimeout) clearTimeout(this.debounceTimeout);
-      this.debounceTimeout = setTimeout(() => this.capture(), this.debounceDelay);
-    };
+    this.scrollHandler = () => this.scheduleCapture();
     window.addEventListener('scroll', this.scrollHandler, { passive: true });
 
     // Capture immediately
@@ -79,58 +90,71 @@ export class ScreenshotCapture {
     this.connector.log('ScreenshotCapture stopped');
   }
 
-  private syncFormState(): void {
-    // Sync checkbox/radio checked state (property → attribute for cloneNode)
-    document.querySelectorAll<HTMLInputElement>('input[type="checkbox"], input[type="radio"]').forEach(el => {
-      if (el.checked) {
-        el.setAttribute('checked', '');
-      } else {
-        el.removeAttribute('checked');
-      }
-    });
+  private scheduleCapture(): void {
+    if (this.debounceTimeout) clearTimeout(this.debounceTimeout);
 
-    // Sync select selected state (selectedIndex → selected attribute on options)
-    document.querySelectorAll<HTMLSelectElement>('select').forEach(selectEl => {
-      const selectedIndex = selectEl.selectedIndex;
-      Array.from(selectEl.options).forEach((option, index) => {
-        if (index === selectedIndex) {
-          option.setAttribute('selected', '');
-        } else {
-          option.removeAttribute('selected');
-        }
-      });
-    });
+    if (this.consecutiveFailures >= this.maxConsecutiveFailures) {
+      return; // Let the interval timer handle retries
+    }
+
+    const delay = Math.max(this.debounceDelay, this.lastCaptureDuration * 1.5);
+    this.debounceTimeout = setTimeout(() => this.capture(), delay);
   }
 
   private async capture(): Promise<void> {
     if (!this.running || this.capturing) return;
-
-    // Skip if page is hidden
     if (document.hidden) return;
 
     this.capturing = true;
+    const generation = ++this.captureGeneration;
+    const startTime = performance.now();
 
     try {
-      // Sync form state to attributes so html-to-image clone captures it
-      this.syncFormState();
+      // Call the NativePHP HTTP bridge to capture screenshot natively
+      const response = await Promise.race([
+        fetch('/_native/api/call', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': this.csrfToken,
+          },
+          body: JSON.stringify({
+            method: 'Screenshot.Capture',
+            params: { quality: this.quality },
+          }),
+        }),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('Capture timeout')), this.captureTimeout)
+        ),
+      ]);
 
-      const data = await toJpeg(document.body, {
-        quality: this.quality,
-        pixelRatio: this.pixelRatio,
-        skipAutoScale: true,
-        skipFonts: true,
-        filter: (el: Element) => {
-          return el.getAttribute?.('data-agent-ignore') !== 'true';
-        },
-      });
+      if (!response.ok) {
+        throw new Error(`Bridge HTTP ${response.status}`);
+      }
 
-      const width = Math.round(document.body.scrollWidth * this.pixelRatio);
-      const height = Math.round(document.body.scrollHeight * this.pixelRatio);
+      const json = await response.json();
+      if (json.status === 'error') {
+        throw new Error(json.message || 'Bridge error');
+      }
+
+      const result = json.data;
+      if (result.error) {
+        throw new Error(result.error);
+      }
+
+      // Discard if a newer capture generation was started
+      if (generation !== this.captureGeneration) return;
+
+      this.lastCaptureDuration = performance.now() - startTime;
+      this.consecutiveFailures = 0;
 
       this.connector.send(MessageTypes.PREVIEW_FRAME, {
-        data,
-        width,
-        height,
+        data: result.data,
+        width: Math.round(window.innerWidth),
+        height: Math.round(window.innerHeight),
+        pageWidth: document.documentElement.scrollWidth,
+        pageHeight: document.documentElement.scrollHeight,
         scrollX: Math.round(window.scrollX),
         scrollY: Math.round(window.scrollY),
         viewportWidth: Math.round(window.innerWidth),
@@ -139,7 +163,16 @@ export class ScreenshotCapture {
         url: window.location.href,
       });
     } catch (e) {
-      this.connector.log('ScreenshotCapture error: ' + (e as Error).message);
+      this.lastCaptureDuration = performance.now() - startTime;
+      this.consecutiveFailures++;
+
+      const errorMsg = e instanceof Error ? e.message
+        : (typeof e === 'string' ? e : JSON.stringify(e));
+      this.connector.log(`ScreenshotCapture error (${this.consecutiveFailures}): ${errorMsg}`);
+
+      if (this.consecutiveFailures >= this.maxConsecutiveFailures) {
+        this.connector.log('ScreenshotCapture: backing off — will retry via interval timer');
+      }
     } finally {
       this.capturing = false;
     }
